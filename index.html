@@ -199,9 +199,8 @@ const SIGNAL_URL     = `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${SI
 // READ URL PARAMS
 // ══════════════════════════════════════════
 const params       = new URLSearchParams(window.location.search);
-const nodeId       = params.get('nodeId')       || '';
-const nodeName     = params.get('nodeName')     || 'Layer';
-const sessionToken = params.get('sessionToken') || '';
+const nodeId       = params.get('nodeId')   || '';
+const nodeName     = params.get('nodeName') || 'Layer';
 
 document.getElementById('node-label').textContent = 'Layer: ' + decodeURIComponent(nodeName);
 
@@ -330,8 +329,8 @@ document.getElementById('send-btn').addEventListener('click', async () => {
       createdAt: new Date().toISOString()
     };
 
-    // 3. Write signal JSON to fixed key with sessionToken
-    const signal = { nodeId, comment, sessionToken, ts: Date.now() };
+    // 3. Write signal JSON — just nodeId + comment + timestamp
+    const signal = { nodeId, comment, ts: Date.now() };
     const signalBlob = new Blob([JSON.stringify(signal)], { type:'application/json' });
     await uploadFile(signalBlob, SIGNAL_KEY, 'application/json');
 
