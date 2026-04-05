@@ -452,10 +452,8 @@ document.getElementById('send-btn').addEventListener('click', async () => {
       duration:  previewAudio ? Math.round(previewAudio.duration) : 0,
       createdAt: new Date().toISOString()
     };
-    // Send to opener (Figma plugin)
-    if (window.opener) {
-      window.opener.postMessage({ type: 'audio-comment-ready', nodeId, comment }, '*');
-    }
+    // Write a signal file to S3 so the Figma plugin can poll and pick it up
+    await writeSignalToS3(nodeId, comment);
     showState('success');
     setTimeout(() => window.close(), 2500);
   } catch (err) {
@@ -521,6 +519,35 @@ async function uploadToS3(blob) {
   });
   if (!resp.ok) { const t = await resp.text(); throw new Error(`S3 ${resp.status}: ${t}`); }
   return url;
+}
+
+// Write a tiny signal JSON to S3 so Figma plugin can poll it
+async function writeSignalToS3(nodeId, comment) {
+  const signalKey  = 'signals/' + nodeId.replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+  const signalUrl  = `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${signalKey}`;
+  const payload    = JSON.stringify({ nodeId, comment, ts: Date.now() });
+  const blob2      = new Blob([payload], { type: 'application/json' });
+
+  const now        = new Date();
+  function pad(n)  { return n.toString().padStart(2,'0'); }
+  const dateStr    = now.getUTCFullYear() + pad(now.getUTCMonth()+1) + pad(now.getUTCDate());
+  const dtStr      = dateStr + 'T' + pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + 'Z';
+  const cType      = 'application/json';
+  const host       = `${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com`;
+  const pHash      = await sha256Hex(blob2);
+  const cHeaders   = `content-type:${cType}\nhost:${host}\nx-amz-content-sha256:${pHash}\nx-amz-date:${dtStr}\n`;
+  const sHeaders   = 'content-type;host;x-amz-content-sha256;x-amz-date';
+  const cReq       = ['PUT', '/' + signalKey, '', cHeaders, sHeaders, pHash].join('\n');
+  const cScope     = `${dateStr}/${AWS_REGION}/s3/aws4_request`;
+  const sts        = ['AWS4-HMAC-SHA256', dtStr, cScope, await sha256Hex(cReq)].join('\n');
+  const sKey       = await getSigningKey(AWS_SECRET_KEY, dateStr, AWS_REGION, 's3');
+  const sig        = await hmacHex(sKey, sts);
+  const auth       = `AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY}/${cScope}, SignedHeaders=${sHeaders}, Signature=${sig}`;
+  await fetch(signalUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': cType, 'x-amz-date': dtStr, 'x-amz-content-sha256': pHash, 'Authorization': auth },
+    body: blob2
+  });
 }
 
 async function sha256Hex(data) {
