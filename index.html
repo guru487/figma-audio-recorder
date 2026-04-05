@@ -3,206 +3,260 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Audio Recorder</title>
+<title>Audio Comments — Recorder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F7F7F8;--surface:#fff;--border:#E4E4E8;
-  --accent:#5B57FF;--accent-hover:#4845E0;--accent-light:#EEEEFF;
+  --bg:#F7F7F8;--surface:#fff;--surface2:#F0F0F2;
+  --border:#E4E4E8;--border-light:#F5F5F7;
+  --text:#0F0F10;--text-sec:#6B6B78;--text-muted:#A0A0AB;
+  --accent:#5B57FF;--accent-light:#EEEEFF;--accent-hover:#4845E0;
   --red:#EF4444;--red-light:#FEF2F2;
   --green:#22C55E;--green-light:#F0FDF4;
-  --text:#0F0F10;--text-sec:#6B6B78;--text-muted:#A0A0AB;
-  --radius:12px;--radius-sm:8px;
+  --amber:#F59E0B;--amber-light:#FFFBEB;
+  --radius:14px;--radius-sm:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08);
 }
-html,body{
-  width:100%;height:100vh;min-height:460px;
-  background:var(--bg);
-  font-family:'DM Sans',sans-serif;
-  color:var(--text);font-size:13px;
-  display:flex;align-items:center;justify-content:center;
-  overflow:hidden;
-}
-.card{
-  width:320px;background:var(--surface);
-  border-radius:var(--radius);border:1px solid var(--border);
-  padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.08);
-  display:flex;flex-direction:column;gap:16px;
-}
-.card-header{display:flex;align-items:center;gap:10px;}
-.logo{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.card-title{font-size:15px;font-weight:600;}
-.card-subtitle{font-size:12px;color:var(--text-muted);}
-.state{display:none;flex-direction:column;gap:12px;}
-.state.active{display:flex;}
+html,body{min-height:100vh;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);font-size:14px;}
+.app{max-width:640px;margin:0 auto;padding:24px 16px 48px;}
 
-/* IDLE */
+/* HEADER */
+.app-header{display:flex;align-items:center;gap:12px;margin-bottom:28px;}
+.app-logo{width:44px;height:44px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.app-title{font-size:20px;font-weight:600;}
+.app-subtitle{font-size:13px;color:var(--text-muted);}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:14px;}
+
+/* RECORDER */
+.recorder-idle,.recorder-recording,.recorder-preview{display:none;}
+.recorder-idle.active,.recorder-recording.active,.recorder-preview.active{display:block;}
+
+/* Name input */
+.name-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border-color .15s,box-shadow .15s;margin-bottom:12px;}
+.name-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,87,255,.1);background:var(--surface);}
+.name-input::placeholder{color:var(--text-muted);}
+.name-input.error{border-color:var(--red);}
+
+/* Record button */
 .record-center{display:flex;flex-direction:column;align-items:center;gap:10px;}
-.record-btn{width:64px;height:64px;border-radius:50%;background:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 4px 20px rgba(239,68,68,.4);transition:all .2s;}
-.record-btn:hover{transform:scale(1.07);box-shadow:0 6px 24px rgba(239,68,68,.5);}
+.record-btn{width:72px;height:72px;border-radius:50%;background:var(--red);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 4px 20px rgba(239,68,68,.4);transition:all .2s;}
+.record-btn:hover{transform:scale(1.07);box-shadow:0 6px 28px rgba(239,68,68,.5);}
 .record-hint{font-size:12px;color:var(--text-muted);text-align:center;}
 
-/* RECORDING */
-.recording-center{display:flex;flex-direction:column;align-items:center;gap:10px;}
-.rec-indicator{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--red);}
-.rec-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 1s ease-in-out infinite;}
+/* Recording */
+.recording-ui{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.rec-indicator{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--red);}
+.rec-dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:blink 1s ease-in-out infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.timer{font-family:'DM Mono',monospace;font-size:32px;font-weight:500;letter-spacing:2px;}
-.waveform{width:100%;height:44px;border-radius:8px;background:var(--bg);}
-.stop-btn{width:100%;padding:11px;background:var(--text);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+.timer{font-family:'DM Mono',monospace;font-size:36px;font-weight:500;letter-spacing:3px;color:var(--text);}
+.waveform{width:100%;height:48px;border-radius:8px;background:var(--bg);}
+.stop-btn{padding:12px 36px;background:var(--text);color:white;border:none;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s;}
 .stop-btn:hover{opacity:.85;}
 
-/* PREVIEW */
-.player-wrap{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);}
-.play-btn{width:32px;height:32px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;}
+/* Preview */
+.preview-ui{display:flex;flex-direction:column;gap:12px;}
+.preview-name{font-size:14px;font-weight:600;color:var(--text);padding:4px 0;}
+.audio-player{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border);}
+.play-btn{width:36px;height:36px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;transition:background .15s;}
 .play-btn:hover{background:var(--accent-hover);}
 .track{flex:1;}
 .progress-wrap{height:4px;background:var(--border);border-radius:4px;cursor:pointer;margin-bottom:4px;position:relative;}
 .progress-fill{height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .1s linear;position:relative;}
 .progress-fill::after{content:'';position:absolute;right:-5px;top:-3px;width:10px;height:10px;background:var(--accent);border-radius:50%;box-shadow:0 0 0 2px white;}
 .time-row{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);display:flex;justify-content:space-between;}
-.label-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;resize:none;height:56px;transition:border-color .15s;}
-.label-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,87,255,.08);background:var(--surface);}
-.label-input::placeholder{color:var(--text-muted);}
-.action-row{display:flex;gap:8px;}
-.btn-discard{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text-sec);cursor:pointer;}
-.btn-discard:hover{background:var(--bg);}
-.btn-send{flex:2;padding:10px;border:none;border-radius:var(--radius-sm);background:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(91,87,255,.25);}
-.btn-send:hover{background:var(--accent-hover);}
-.btn-send:disabled{background:var(--text-muted);box-shadow:none;cursor:not-allowed;}
+.preview-actions{display:flex;gap:8px;}
+.btn-discard{flex:1;padding:11px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text-sec);cursor:pointer;transition:all .15s;}
+.btn-discard:hover{background:var(--surface2);}
+.btn-save{flex:2;padding:11px;border:none;border-radius:var(--radius-sm);background:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 8px rgba(91,87,255,.25);transition:all .15s;}
+.btn-save:hover{background:var(--accent-hover);}
+.btn-save:disabled{background:var(--text-muted);box-shadow:none;cursor:not-allowed;}
 
-/* UPLOADING */
-.uploading-center{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0;}
-.upload-spinner{width:40px;height:40px;border:3px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+/* Upload progress */
+.upload-wrap{padding:12px 14px;background:var(--accent-light);border-radius:var(--radius-sm);border:1px solid rgba(91,87,255,.2);display:none;flex-direction:column;gap:6px;}
+.upload-wrap.visible{display:flex;}
+.upload-label{font-size:12px;font-weight:500;color:var(--accent);display:flex;align-items:center;gap:6px;}
+.upload-bar-bg{height:3px;background:rgba(91,87,255,.15);border-radius:4px;}
+.upload-bar{height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .3s ease;}
+
+/* Success toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0F0F10;color:white;padding:12px 20px;border-radius:100px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;transition:transform .3s ease;z-index:999;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* PASSWORD */
+.pw-overlay{position:fixed;inset:0;background:rgba(15,15,16,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;}
+.pw-card{background:var(--surface);border-radius:var(--radius);padding:32px;width:320px;box-shadow:var(--shadow-md);display:flex;flex-direction:column;align-items:center;gap:16px;}
+.pw-icon{width:52px;height:52px;background:var(--accent-light);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+.pw-title{font-size:18px;font-weight:600;}
+.pw-sub{font-size:13px;color:var(--text-muted);text-align:center;}
+.pw-inp{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:14px;color:var(--text);background:var(--bg);outline:none;letter-spacing:2px;transition:border-color .15s;}
+.pw-inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,87,255,.1);}
+.pw-inp.error{border-color:var(--red);}
+.pw-err{font-size:12px;color:var(--red);display:none;}
+.pw-err.visible{display:block;}
+.pw-btn{width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(91,87,255,.3);}
+.pw-btn:hover{background:var(--accent-hover);}
+
+/* LIBRARY */
+.library-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.library-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);}
+.btn-refresh{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border);border-radius:100px;background:var(--surface);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--text-sec);cursor:pointer;transition:all .15s;}
+.btn-refresh:hover{background:var(--surface2);}
+.btn-refresh.spinning svg{animation:spin .6s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.upload-label{font-size:13px;font-weight:500;color:var(--text-sec);}
-.upload-bar-wrap{width:100%;height:4px;background:var(--border);border-radius:4px;}
-.upload-bar-fill{height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .3s ease;}
 
-/* SUCCESS */
-.success-center{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0;}
-.success-icon{width:48px;height:48px;background:var(--green-light);border-radius:50%;display:flex;align-items:center;justify-content:center;}
-.success-title{font-size:14px;font-weight:600;}
-.success-sub{font-size:12px;color:var(--text-muted);text-align:center;line-height:1.5;}
+.search-input{width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--bg);outline:none;margin-bottom:12px;transition:border-color .15s;}
+.search-input:focus{border-color:var(--accent);background:var(--surface);}
+.search-wrap{position:relative;}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);}
 
-/* ERROR */
-.error-center{display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 0;}
-.error-icon{width:40px;height:40px;background:var(--red-light);border-radius:50%;display:flex;align-items:center;justify-content:center;}
-.error-msg{font-size:12.5px;color:var(--red);text-align:center;line-height:1.5;}
-.btn-retry-err{padding:8px 24px;background:var(--red);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
-.spinner-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
+.audio-list{display:flex;flex-direction:column;gap:8px;}
+.audio-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:12px;transition:box-shadow .15s;}
+.audio-item:hover{box-shadow:var(--shadow);}
+.audio-item-play{width:34px;height:34px;border-radius:50%;background:var(--accent-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;transition:all .15s;}
+.audio-item-play:hover,.audio-item-play.playing{background:var(--accent);color:white;}
+.audio-item-info{flex:1;min-width:0;}
+.audio-item-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.audio-item-meta{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px;margin-top:2px;}
+.audio-item-delete{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);transition:all .15s;flex-shrink:0;}
+.audio-item-delete:hover{color:var(--red);border-color:var(--red);background:var(--red-light);}
+
+.empty-library{display:flex;flex-direction:column;align-items:center;gap:8px;padding:32px 20px;color:var(--text-muted);}
+.empty-library-icon{width:44px;height:44px;background:var(--surface2);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+
+.loading-list{display:flex;justify-content:center;padding:24px;}
+.loading-spinner{width:28px;height:28px;border:3px solid var(--accent-light);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+
+.spinner-sm{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="card-header">
-    <div class="logo">
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+
+<!-- PASSWORD OVERLAY -->
+<div class="pw-overlay" id="pw-overlay">
+  <div class="pw-card">
+    <div class="pw-icon">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#5B57FF" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="pw-title">Audio Comments</div>
+    <div class="pw-sub">Enter password to access the recorder</div>
+    <input type="password" class="pw-inp" id="pw-inp" placeholder="Enter password" autocomplete="off"/>
+    <div class="pw-err" id="pw-err">Incorrect password. Try again.</div>
+    <button class="pw-btn" id="pw-btn">Unlock</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app" id="main-app" style="display:none;">
+  <div class="app-header">
+    <div class="app-logo">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
     </div>
     <div>
-      <div class="card-title">Record Audio Comment</div>
-      <div class="card-subtitle" id="node-label">Loading...</div>
+      <div class="app-title">Audio Comments Recorder</div>
+      <div class="app-subtitle">Record voice comments for your Figma designs</div>
     </div>
   </div>
 
-  <!-- IDLE -->
-  <div class="state active" id="state-idle">
-    <div class="record-center">
-      <button class="record-btn" id="record-btn">
-        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-          <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" fill="none" stroke="white" stroke-width="2"/>
-        </svg>
-      </button>
-      <div class="record-hint">Click to start recording your voice comment</div>
-    </div>
-  </div>
+  <!-- RECORDER CARD -->
+  <div class="card">
+    <div class="card-title">New Recording</div>
 
-  <!-- RECORDING -->
-  <div class="state" id="state-recording">
-    <div class="recording-center">
-      <div class="rec-indicator"><div class="rec-dot"></div>Recording...</div>
-      <div class="timer" id="timer">0:00</div>
-      <canvas class="waveform" id="waveform" width="272" height="44"></canvas>
-      <button class="stop-btn" id="stop-btn">Stop Recording</button>
+    <!-- IDLE -->
+    <div class="recorder-idle active" id="recorder-idle">
+      <input type="text" class="name-input" id="recording-name" placeholder="Give this recording a name (e.g. Homepage feedback)"/>
+      <div class="record-center">
+        <button class="record-btn" id="record-btn">
+          <svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" fill="none" stroke="white" stroke-width="2"/>
+          </svg>
+        </button>
+        <div class="record-hint">Enter a name then click to record</div>
+      </div>
     </div>
-  </div>
 
-  <!-- PREVIEW -->
-  <div class="state" id="state-preview">
-    <div class="player-wrap">
-      <button class="play-btn" id="play-btn">
-        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
-      </button>
-      <div class="track">
-        <div class="progress-wrap" id="progress-wrap">
-          <div class="progress-fill" id="progress-fill"></div>
+    <!-- RECORDING -->
+    <div class="recorder-recording" id="recorder-recording">
+      <div class="recording-ui">
+        <div class="rec-indicator"><div class="rec-dot"></div>Recording...</div>
+        <div class="timer" id="timer">0:00</div>
+        <canvas class="waveform" id="waveform" width="560" height="48"></canvas>
+        <button class="stop-btn" id="stop-btn">Stop Recording</button>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="recorder-preview" id="recorder-preview">
+      <div class="preview-ui">
+        <div class="preview-name" id="preview-name"></div>
+        <div class="audio-player">
+          <button class="play-btn" id="preview-play-btn">
+            <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </button>
+          <div class="track">
+            <div class="progress-wrap" id="preview-progress-wrap">
+              <div class="progress-fill" id="preview-progress"></div>
+            </div>
+            <div class="time-row"><span id="prev-cur">0:00</span><span id="prev-dur">0:00</span></div>
+          </div>
         </div>
-        <div class="time-row"><span id="cur-time">0:00</span><span id="dur-time">0:00</span></div>
+        <div class="upload-wrap" id="upload-wrap">
+          <div class="upload-label">
+            <div class="spinner-sm" style="border-color:rgba(91,87,255,.3);border-top-color:var(--accent);width:12px;height:12px;"></div>
+            Uploading to cloud...
+          </div>
+          <div class="upload-bar-bg"><div class="upload-bar" id="upload-bar"></div></div>
+        </div>
+        <div class="preview-actions">
+          <button class="btn-discard" id="discard-btn">Discard</button>
+          <button class="btn-save" id="save-btn">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+            Save Recording
+          </button>
+        </div>
       </div>
     </div>
-    <textarea class="label-input" id="label-input" placeholder="Add a note or label (optional)..."></textarea>
-    <div class="action-row">
-      <button class="btn-discard" id="discard-btn">Discard</button>
-      <button class="btn-send" id="send-btn">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
-        Save to Figma
+  </div>
+
+  <!-- LIBRARY CARD -->
+  <div class="card">
+    <div class="library-header">
+      <div class="library-title">All Recordings</div>
+      <button class="btn-refresh" id="refresh-btn">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
       </button>
     </div>
-  </div>
-
-  <!-- UPLOADING -->
-  <div class="state" id="state-uploading">
-    <div class="uploading-center">
-      <div class="upload-spinner"></div>
-      <div class="upload-label">Uploading & saving to Figma...</div>
-      <div class="upload-bar-wrap"><div class="upload-bar-fill" id="upload-bar"></div></div>
+    <div class="search-wrap">
+      <svg class="search-icon" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" id="search-input" placeholder="Search recordings..."/>
     </div>
-  </div>
-
-  <!-- SUCCESS -->
-  <div class="state" id="state-success">
-    <div class="success-center">
-      <div class="success-icon">
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#22C55E" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
-      </div>
-      <div class="success-title">Comment Saved! ✅</div>
-      <div class="success-sub">Your audio comment has been added to the Figma layer.<br/>This window will close automatically.</div>
-    </div>
-  </div>
-
-  <!-- ERROR -->
-  <div class="state" id="state-error">
-    <div class="error-center">
-      <div class="error-icon">
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#EF4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      </div>
-      <div class="error-msg" id="error-msg">Something went wrong. Please try again.</div>
-      <button class="btn-retry-err" id="retry-err-btn">Try Again</button>
+    <div id="audio-list" class="audio-list">
+      <div class="loading-list"><div class="loading-spinner"></div></div>
     </div>
   </div>
 </div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✅ Recording saved!</div>
 
 <script>
 // ══════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════
+const PASSWORD       = 'Guru@2026';
 const AWS_REGION     = 'ap-south-1';
 const S3_BUCKET      = 'figma-audio-comments';
 const AWS_ACCESS_KEY = 'AKIA2UHZHYNC55AZNRWN';
 const AWS_SECRET_KEY = '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';
-const SIGNAL_KEY     = 'signals/latest-signal.json';
-const SIGNAL_URL     = `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${SIGNAL_KEY}`;
-
-// ══════════════════════════════════════════
-// READ URL PARAMS
-// ══════════════════════════════════════════
-const params       = new URLSearchParams(window.location.search);
-const nodeId       = params.get('nodeId')   || '';
-const nodeName     = params.get('nodeName') || 'Layer';
-
-document.getElementById('node-label').textContent = 'Layer: ' + decodeURIComponent(nodeName);
+const LIBRARY_KEY    = 'library/recordings.json';
+const LIBRARY_URL    = `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${LIBRARY_KEY}`;
 
 // ══════════════════════════════════════════
 // STATE
@@ -210,185 +264,357 @@ document.getElementById('node-label').textContent = 'Layer: ' + decodeURICompone
 let mediaRecorder = null, audioChunks = [], recordedBlob = null;
 let previewAudio = null, timerInterval = null, timerSeconds = 0;
 let animFrame = null, audioCtx = null, analyser = null;
+let allRecordings = [];
+let currentPlayingAudio = null, currentPlayingBtn = null;
 
-function showState(s) {
-  ['idle','recording','preview','uploading','success','error'].forEach(n => {
-    document.getElementById('state-'+n).className = 'state'+(n===s?' active':'');
-  });
+// ══════════════════════════════════════════
+// PASSWORD
+// ══════════════════════════════════════════
+document.getElementById('pw-inp').addEventListener('keydown', e => { if (e.key === 'Enter') checkPw(); });
+document.getElementById('pw-btn').addEventListener('click', checkPw);
+function checkPw() {
+  const val = document.getElementById('pw-inp').value;
+  if (val === PASSWORD) {
+    document.getElementById('pw-overlay').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    loadLibrary();
+  } else {
+    document.getElementById('pw-inp').classList.add('error');
+    document.getElementById('pw-err').classList.add('visible');
+    document.getElementById('pw-inp').value = '';
+    setTimeout(() => document.getElementById('pw-inp').classList.remove('error'), 500);
+  }
 }
 
 // ══════════════════════════════════════════
-// RECORDING
+// RECORDER
 // ══════════════════════════════════════════
 document.getElementById('record-btn').addEventListener('click', startRecording);
 document.getElementById('stop-btn').addEventListener('click', stopRecording);
 
 async function startRecording() {
+  const name = document.getElementById('recording-name').value.trim();
+  if (!name) {
+    document.getElementById('recording-name').classList.add('error');
+    document.getElementById('recording-name').focus();
+    setTimeout(() => document.getElementById('recording-name').classList.remove('error'), 1000);
+    return;
+  }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio:{ echoCancellation:true, noiseSuppression:true } });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
     audioChunks = [];
     audioCtx = new AudioContext(); analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
     audioCtx.createMediaStreamSource(stream).connect(analyser);
     mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.ondataavailable = e => { if(e.data.size>0) audioChunks.push(e.data); };
-    mediaRecorder.onstop = onStop;
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = onRecordingStop;
     mediaRecorder.start(100);
-    showState('recording'); startTimer(); drawWaveform();
-  } catch(err) { showError('Microphone access denied. Please allow microphone and reload.'); }
+    showRecorderState('recording');
+    startTimer(); drawWaveform();
+  } catch(err) {
+    alert('Microphone access denied. Please allow microphone access in your browser and try again.');
+  }
 }
 
 function stopRecording() {
-  if(mediaRecorder && mediaRecorder.state !== 'inactive') { mediaRecorder.stop(); mediaRecorder.stream.getTracks().forEach(t=>t.stop()); }
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  }
   stopTimer(); stopWaveform();
 }
 
-function onStop() {
-  recordedBlob = new Blob(audioChunks, { type:'audio/webm' });
+function onRecordingStop() {
+  recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
   previewAudio = new Audio(URL.createObjectURL(recordedBlob));
-  previewAudio.ontimeupdate = updateProgress;
-  previewAudio.onended = onEnded;
-  previewAudio.onloadedmetadata = () => { document.getElementById('dur-time').textContent = fmt(previewAudio.duration); };
-  showState('preview');
+  previewAudio.ontimeupdate = updatePreviewProgress;
+  previewAudio.onended = onPreviewEnded;
+  previewAudio.onloadedmetadata = () => { document.getElementById('prev-dur').textContent = fmt(previewAudio.duration); };
+  document.getElementById('preview-name').textContent = '🎙️ ' + document.getElementById('recording-name').value.trim();
+  showRecorderState('preview');
 }
 
-function startTimer() { timerSeconds=0; updTimer(); timerInterval=setInterval(()=>{timerSeconds++;updTimer();},1000); }
+// Timer
+function startTimer() { timerSeconds = 0; updTimer(); timerInterval = setInterval(() => { timerSeconds++; updTimer(); }, 1000); }
 function stopTimer()  { clearInterval(timerInterval); }
 function updTimer()   { document.getElementById('timer').textContent = fmt(timerSeconds); }
-function fmt(s)       { const m=Math.floor(s/60); return m+':'+Math.floor(s%60).toString().padStart(2,'0'); }
+function fmt(s)       { const m = Math.floor(s/60); return m+':'+Math.floor(s%60).toString().padStart(2,'0'); }
 
+// Waveform
 function drawWaveform() {
-  const canvas=document.getElementById('waveform'), ctx=canvas.getContext('2d');
-  const W=canvas.width, H=canvas.height;
+  const canvas = document.getElementById('waveform'), ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
   function draw() {
-    animFrame=requestAnimationFrame(draw);
-    const data=new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data);
-    ctx.clearRect(0,0,W,H);
-    const bW=3,gap=2,total=bW+gap,bars=Math.floor(W/total);
-    for(let i=0;i<bars;i++){
-      const val=data[Math.floor(i*data.length/bars)]/255, h=Math.max(3,val*H);
-      ctx.fillStyle=`rgba(91,87,255,${0.3+val*0.7})`;
-      ctx.beginPath(); ctx.roundRect(i*total,(H-h)/2,bW,h,2); ctx.fill();
+    animFrame = requestAnimationFrame(draw);
+    const data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data);
+    ctx.clearRect(0, 0, W, H);
+    const bW = 3, gap = 2, total = bW + gap, bars = Math.floor(W / total);
+    for (let i = 0; i < bars; i++) {
+      const val = data[Math.floor(i * data.length / bars)] / 255;
+      const h   = Math.max(3, val * H);
+      ctx.fillStyle = `rgba(91,87,255,${0.3 + val * 0.7})`;
+      ctx.beginPath(); ctx.roundRect(i * total, (H - h) / 2, bW, h, 2); ctx.fill();
     }
   }
   draw();
 }
-function stopWaveform() { cancelAnimationFrame(animFrame); const c=document.getElementById('waveform'); c.getContext('2d').clearRect(0,0,c.width,c.height); }
+function stopWaveform() { cancelAnimationFrame(animFrame); const c = document.getElementById('waveform'); c.getContext('2d').clearRect(0, 0, c.width, c.height); }
 
-// PREVIEW PLAYER
-document.getElementById('play-btn').addEventListener('click', () => {
-  if(!previewAudio) return;
-  const btn=document.getElementById('play-btn');
-  if(previewAudio.paused){ previewAudio.play(); btn.innerHTML='<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'; }
-  else { previewAudio.pause(); btn.innerHTML='<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>'; }
+// Preview player
+document.getElementById('preview-play-btn').addEventListener('click', () => {
+  if (!previewAudio) return;
+  const btn = document.getElementById('preview-play-btn');
+  if (previewAudio.paused) {
+    previewAudio.play();
+    btn.innerHTML = '<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  } else {
+    previewAudio.pause();
+    btn.innerHTML = '<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
+  }
 });
-function updateProgress() {
-  if(!previewAudio||!previewAudio.duration) return;
-  document.getElementById('progress-fill').style.width=(previewAudio.currentTime/previewAudio.duration)*100+'%';
-  document.getElementById('cur-time').textContent=fmt(previewAudio.currentTime);
+function updatePreviewProgress() {
+  if (!previewAudio || !previewAudio.duration) return;
+  document.getElementById('preview-progress').style.width = (previewAudio.currentTime / previewAudio.duration * 100) + '%';
+  document.getElementById('prev-cur').textContent = fmt(previewAudio.currentTime);
 }
-function onEnded() {
-  document.getElementById('play-btn').innerHTML='<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
-  document.getElementById('progress-fill').style.width='0%';
-  document.getElementById('cur-time').textContent='0:00';
+function onPreviewEnded() {
+  document.getElementById('preview-play-btn').innerHTML = '<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
+  document.getElementById('preview-progress').style.width = '0%';
+  document.getElementById('prev-cur').textContent = '0:00';
 }
-document.getElementById('progress-wrap').addEventListener('click', e => {
-  if(!previewAudio) return;
-  const r=e.currentTarget.getBoundingClientRect();
-  previewAudio.currentTime=((e.clientX-r.left)/r.width)*previewAudio.duration;
-});
 
+// Discard
 document.getElementById('discard-btn').addEventListener('click', () => {
-  if(previewAudio){previewAudio.pause();previewAudio=null;}
-  recordedBlob=null;audioChunks=[];
-  document.getElementById('label-input').value='';
-  document.getElementById('progress-fill').style.width='0%';
-  document.getElementById('cur-time').textContent='0:00';
-  document.getElementById('dur-time').textContent='0:00';
-  document.getElementById('play-btn').innerHTML='<svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
-  showState('idle');
+  if (previewAudio) { previewAudio.pause(); previewAudio = null; }
+  recordedBlob = null; audioChunks = [];
+  document.getElementById('recording-name').value = '';
+  showRecorderState('idle');
 });
 
-// ══════════════════════════════════════════
-// SAVE — upload audio + write signal
-// ══════════════════════════════════════════
-document.getElementById('send-btn').addEventListener('click', async () => {
-  if(!recordedBlob) return;
-  showState('uploading');
+// Save
+document.getElementById('save-btn').addEventListener('click', async () => {
+  if (!recordedBlob) return;
+  const name = document.getElementById('recording-name').value.trim();
+  const btn  = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner-sm"></div> Saving...';
+  document.getElementById('upload-wrap').classList.add('visible');
   simulateBar();
   try {
-    // 1. Upload audio file
-    const audioUrl = await uploadFile(recordedBlob, 'audio-comments/'+Date.now()+'-'+Math.random().toString(36).substr(2,8)+'.webm', 'audio/webm');
+    // Upload audio file
+    const audioKey = 'recordings/' + Date.now() + '-' + Math.random().toString(36).substr(2,6) + '.webm';
+    const audioUrl = await uploadFile(recordedBlob, audioKey, 'audio/webm');
 
-    // 2. Build comment object
-    const label = document.getElementById('label-input').value.trim();
-    const comment = {
-      id:        'ac_'+Date.now()+'_'+Math.random().toString(36).substr(2,6),
+    // Add to library
+    const entry = {
+      id:        'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2,6),
+      name:      name,
       url:       audioUrl,
-      label:     label,
       duration:  previewAudio ? Math.round(previewAudio.duration) : 0,
       createdAt: new Date().toISOString()
     };
+    await addToLibrary(entry);
 
-    // 3. Write signal JSON — just nodeId + comment + timestamp
-    const signal = { nodeId, comment, ts: Date.now() };
-    const signalBlob = new Blob([JSON.stringify(signal)], { type:'application/json' });
-    await uploadFile(signalBlob, SIGNAL_KEY, 'application/json');
-
-    showState('success');
-    setTimeout(() => window.close(), 2500);
+    // Reset
+    document.getElementById('upload-wrap').classList.remove('visible');
+    if (previewAudio) { previewAudio.pause(); previewAudio = null; }
+    recordedBlob = null; audioChunks = [];
+    document.getElementById('recording-name').value = '';
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Save Recording';
+    showRecorderState('idle');
+    showToast('✅ Recording saved to library!');
+    loadLibrary();
   } catch(err) {
-    showError('Upload failed: '+err.message);
+    document.getElementById('upload-wrap').classList.remove('visible');
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg> Save Recording';
+    alert('Save failed: ' + err.message);
   }
 });
 
-document.getElementById('retry-err-btn').addEventListener('click', () => showState('idle'));
-function showError(msg) { document.getElementById('error-msg').textContent=msg; showState('error'); }
+function showRecorderState(s) {
+  ['idle','recording','preview'].forEach(n => {
+    document.getElementById('recorder-' + n).className = 'recorder-' + n + (n === s ? ' active' : '');
+  });
+}
 
 function simulateBar() {
-  let w=0; const bar=document.getElementById('upload-bar');
-  const iv=setInterval(()=>{ w=Math.min(w+Math.random()*15,85); bar.style.width=w+'%'; if(w>=85)clearInterval(iv); },200);
+  let w = 0; const bar = document.getElementById('upload-bar');
+  const iv = setInterval(() => { w = Math.min(w + Math.random() * 15, 85); bar.style.width = w + '%'; if (w >= 85) clearInterval(iv); }, 200);
 }
 
 // ══════════════════════════════════════════
-// GENERIC S3 UPLOAD (PUT)
+// LIBRARY
+// ══════════════════════════════════════════
+async function loadLibrary() {
+  document.getElementById('audio-list').innerHTML = '<div class="loading-list"><div class="loading-spinner"></div></div>';
+  try {
+    const resp = await fetch(LIBRARY_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (resp.ok) {
+      allRecordings = await resp.json();
+    } else {
+      allRecordings = [];
+    }
+  } catch(e) {
+    allRecordings = [];
+  }
+  renderLibrary(allRecordings);
+}
+
+function renderLibrary(recordings) {
+  const list = document.getElementById('audio-list');
+  if (!recordings.length) {
+    list.innerHTML = `<div class="empty-library">
+      <div class="empty-library-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#A0A0AB" stroke-width="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg></div>
+      <p style="font-size:13px;font-weight:500;">No recordings yet</p>
+      <p style="font-size:12px;">Record your first voice comment above</p>
+    </div>`;
+    return;
+  }
+  list.innerHTML = '';
+  [...recordings].reverse().forEach(r => {
+    const item = document.createElement('div');
+    item.className = 'audio-item';
+    const date = new Date(r.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    item.innerHTML = `
+      <button class="audio-item-play" data-url="${r.url}" data-id="${r.id}">
+        <svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+      </button>
+      <div class="audio-item-info">
+        <div class="audio-item-name">${r.name}</div>
+        <div class="audio-item-meta">
+          <span>${fmt(r.duration || 0)}</span>
+          <span>·</span>
+          <span>${date}</span>
+        </div>
+      </div>
+      <button class="audio-item-delete" data-id="${r.id}" title="Delete">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/><path d="M10,11v6M14,11v6"/></svg>
+      </button>`;
+    list.appendChild(item);
+
+    item.querySelector('.audio-item-play').addEventListener('click', e => {
+      const btn = e.currentTarget;
+      togglePlay(btn, btn.dataset.url, btn.dataset.id);
+    });
+    item.querySelector('.audio-item-delete').addEventListener('click', async e => {
+      const id = e.currentTarget.dataset.id;
+      if (confirm('Delete this recording?')) {
+        allRecordings = allRecordings.filter(r => r.id !== id);
+        await saveLibrary(allRecordings);
+        renderLibrary(filterRecordings(document.getElementById('search-input').value));
+        showToast('🗑️ Recording deleted');
+      }
+    });
+  });
+}
+
+function filterRecordings(query) {
+  if (!query) return allRecordings;
+  return allRecordings.filter(r => r.name.toLowerCase().includes(query.toLowerCase()));
+}
+
+function togglePlay(btn, url, id) {
+  if (currentPlayingAudio && currentPlayingBtn === btn) {
+    if (!currentPlayingAudio.paused) {
+      currentPlayingAudio.pause();
+      btn.classList.remove('playing');
+      btn.innerHTML = '<svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
+      return;
+    }
+  }
+  if (currentPlayingAudio) {
+    currentPlayingAudio.pause();
+    if (currentPlayingBtn) {
+      currentPlayingBtn.classList.remove('playing');
+      currentPlayingBtn.innerHTML = '<svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
+    }
+  }
+  const audio = new Audio(url);
+  currentPlayingAudio = audio; currentPlayingBtn = btn;
+  audio.play(); btn.classList.add('playing');
+  btn.innerHTML = '<svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  audio.onended = () => {
+    btn.classList.remove('playing');
+    btn.innerHTML = '<svg width="11" height="11" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>';
+    currentPlayingAudio = null; currentPlayingBtn = null;
+  };
+}
+
+// Search
+document.getElementById('search-input').addEventListener('input', e => {
+  renderLibrary(filterRecordings(e.target.value));
+});
+
+// Refresh
+document.getElementById('refresh-btn').addEventListener('click', () => {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  loadLibrary().finally(() => setTimeout(() => btn.classList.remove('spinning'), 500));
+});
+
+// ══════════════════════════════════════════
+// LIBRARY JSON — read/write via S3
+// ══════════════════════════════════════════
+async function addToLibrary(entry) {
+  const existing = [...allRecordings, entry];
+  await saveLibrary(existing);
+  allRecordings = existing;
+}
+
+async function saveLibrary(recordings) {
+  const blob = new Blob([JSON.stringify(recordings)], { type: 'application/json' });
+  await uploadFile(blob, LIBRARY_KEY, 'application/json');
+}
+
+// ══════════════════════════════════════════
+// AWS S3 UPLOAD
 // ══════════════════════════════════════════
 async function uploadFile(blob, key, contentType) {
-  const url  = `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+  const url = `https://${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${key}`;
   const now  = new Date();
-  function pad(n){ return n.toString().padStart(2,'0'); }
-  const dateStr = now.getUTCFullYear()+pad(now.getUTCMonth()+1)+pad(now.getUTCDate());
-  const dtStr   = dateStr+'T'+pad(now.getUTCHours())+pad(now.getUTCMinutes())+pad(now.getUTCSeconds())+'Z';
+  function pad(n) { return n.toString().padStart(2, '0'); }
+  const dateStr = now.getUTCFullYear() + pad(now.getUTCMonth()+1) + pad(now.getUTCDate());
+  const dtStr   = dateStr + 'T' + pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + 'Z';
   const host    = `${S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com`;
   const pHash   = await sha256Hex(blob);
   const cHdrs   = `content-type:${contentType}\nhost:${host}\nx-amz-content-sha256:${pHash}\nx-amz-date:${dtStr}\n`;
   const sHdrs   = 'content-type;host;x-amz-content-sha256;x-amz-date';
-  const cReq    = ['PUT', '/'+key, '', cHdrs, sHdrs, pHash].join('\n');
+  const cReq    = ['PUT', '/' + key, '', cHdrs, sHdrs, pHash].join('\n');
   const cScope  = `${dateStr}/${AWS_REGION}/s3/aws4_request`;
   const sts     = ['AWS4-HMAC-SHA256', dtStr, cScope, await sha256Hex(cReq)].join('\n');
   const sKey    = await getSigningKey(AWS_SECRET_KEY, dateStr, AWS_REGION, 's3');
   const sig     = await hmacHex(sKey, sts);
   const auth    = `AWS4-HMAC-SHA256 Credential=${AWS_ACCESS_KEY}/${cScope}, SignedHeaders=${sHdrs}, Signature=${sig}`;
   const resp    = await fetch(url, { method:'PUT', headers:{ 'Content-Type':contentType, 'x-amz-date':dtStr, 'x-amz-content-sha256':pHash, 'Authorization':auth }, body:blob });
-  if(!resp.ok){ const t=await resp.text(); throw new Error('S3 '+resp.status+': '+t); }
+  if (!resp.ok) { const t = await resp.text(); throw new Error('S3 ' + resp.status + ': ' + t); }
   return url;
 }
 
 async function sha256Hex(data) {
-  const buf=data instanceof Blob?await data.arrayBuffer():new TextEncoder().encode(data);
-  const hash=await crypto.subtle.digest('SHA-256',buf);
-  return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  const buf = data instanceof Blob ? await data.arrayBuffer() : new TextEncoder().encode(data);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
-async function hmacSha256(key,data) {
-  const k=key instanceof CryptoKey?key:await crypto.subtle.importKey('raw',typeof key==='string'?new TextEncoder().encode(key):key,{name:'HMAC',hash:'SHA-256'},false,['sign']);
-  return new Uint8Array(await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(data)));
+async function hmacSha256(key, data) {
+  const k = key instanceof CryptoKey ? key : await crypto.subtle.importKey('raw', typeof key === 'string' ? new TextEncoder().encode(key) : key, { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(data)));
 }
-async function hmacHex(key,data){ return Array.from(await hmacSha256(key,data)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
-async function getSigningKey(secret,date,region,service) {
-  const kDate=await hmacSha256('AWS4'+secret,date);
-  const kRegion=await hmacSha256(kDate,region);
-  const kService=await hmacSha256(kRegion,service);
-  const kSigning=await hmacSha256(kService,'aws4_request');
-  return crypto.subtle.importKey('raw',kSigning,{name:'HMAC',hash:'SHA-256'},false,['sign']);
+async function hmacHex(key, data) { return Array.from(await hmacSha256(key, data)).map(b => b.toString(16).padStart(2,'0')).join(''); }
+async function getSigningKey(secret, date, region, service) {
+  const kDate    = await hmacSha256('AWS4' + secret, date);
+  const kRegion  = await hmacSha256(kDate, region);
+  const kService = await hmacSha256(kRegion, service);
+  const kSigning = await hmacSha256(kService, 'aws4_request');
+  return crypto.subtle.importKey('raw', kSigning, { name:'HMAC', hash:'SHA-256' }, false, ['sign']);
+}
+
+// Toast
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 </script>
 </body>
